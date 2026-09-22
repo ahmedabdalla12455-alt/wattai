@@ -31,6 +31,12 @@ jobs:
       - name: Prepare Android builder
         run: npm install -g @bubblewrap/cli
 
+      - name: Configure Bubblewrap
+        run: |
+          mkdir -p ~/.bubblewrap
+          echo jdkPath: $JAVA_HOME > ~/.bubblewrap/config.yaml
+          echo androidSdkPath: $ANDROID_HOME >> ~/.bubblewrap/config.yaml
+
       - name: Initialize Android project
         run: bubblewrap init --manifest twa-manifest.json
 
