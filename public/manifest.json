@@ -1,0 +1,10 @@
+{
+  "name": "WattAI - AI Energy Monitor",
+  "short_name": "WattAI",
+  "description": "AI-powered GPU energy and infrastructure monitoring",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#06b6d4",
+  "orientation": "portrait"
+}
