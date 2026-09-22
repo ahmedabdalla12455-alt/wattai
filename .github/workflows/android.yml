@@ -28,10 +28,6 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: Configure Bubblewrap environment
-        run: mkdir -p ~/.bubblewrap && printf "{"jdkPath":"","androidSdkPath":""}
-" > ~/.bubblewrap/config.json
-
       - name: Prepare Android builder
         run: npm install -g @bubblewrap/cli
 
