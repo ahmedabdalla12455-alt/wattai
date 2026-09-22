@@ -34,8 +34,7 @@ jobs:
       - name: Configure Bubblewrap
         run: |
           mkdir -p ~/.bubblewrap
-          echo jdkPath: $JAVA_HOME > ~/.bubblewrap/config.yaml
-          echo androidSdkPath: $ANDROID_HOME >> ~/.bubblewrap/config.yaml
+          node -e 'require("fs").writeFileSync(process.env.HOME+"/.bubblewrap/config.json", JSON.stringify({jdkPath:process.env.JAVA_HOME,androidSdkPath:process.env.ANDROID_HOME}))'
 
       - name: Initialize Android project
         run: bubblewrap init --manifest twa-manifest.json
