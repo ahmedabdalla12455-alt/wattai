@@ -7,6 +7,7 @@ import datetime
 
 ROOT = pathlib.Path(__file__).resolve().parent
 REPORT = ROOT / "wattai-manager-report.txt"
+AUDIT = ROOT / "wattai-manager-audit.log"
 TERMUX = pathlib.Path("/data/data/com.termux").exists()
 
 def run(cmd, timeout=180):
@@ -28,6 +29,10 @@ def header():
     print(f"Project: {ROOT}")
     print(f"Termux: {'YES' if TERMUX else 'NO'}")
     print()
+
+def audit(message):
+    with AUDIT.open("a", encoding="utf-8") as f:
+        f.write(datetime.datetime.now().isoformat() + " | " + message + "\n")
 
 def write_report(items):
     text = [
@@ -68,6 +73,7 @@ def test():
     return results
 
 def doctor():
+    audit("doctor started")
     results = []
 
     code, output = status()
@@ -96,6 +102,7 @@ def doctor():
     write_report(results)
 
     print("\n==============================")
+    audit("doctor finished")
     print("Doctor finished.")
     print(f"Report: {REPORT}")
     print("==============================")
