@@ -106,7 +106,7 @@ export default function Home() {
         </section>
 
         <footer className="mt-10 text-center text-xs text-slate-600">
-          WattAI V0.1 • AI Energy & GPU Monitoring
+          WattAI V0.2 • AI Energy & GPU Monitoring
         </footer>
       </div>
     </main>
