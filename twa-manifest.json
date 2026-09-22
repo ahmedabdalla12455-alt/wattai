@@ -1,0 +1,11 @@
+{
+  "packageId": "com.wattai.energy",
+  "host": "wattai-eight.vercel.app",
+  "name": "WattAI",
+  "launcherName": "WattAI",
+  "display": "standalone",
+  "themeColor": "#06b6d4",
+  "navigationColor": "#020617",
+  "startUrl": "/",
+  "iconUrl": "https://wattai-eight.vercel.app/icons/icon.svg"
+}
