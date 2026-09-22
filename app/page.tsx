@@ -1,12 +1,17 @@
 "use client";
 
-const servers = [
+import { useEffect, useState } from "react";
+
+const baseServers = [
   { name: "GPU-01", gpu: 78, power: 286, temp: 64, status: "Healthy" },
   { name: "GPU-02", gpu: 91, power: 331, temp: 71, status: "High load" },
   { name: "GPU-03", gpu: 54, power: 219, temp: 58, status: "Healthy" },
 ];
 
 export default function Home() {
+  const [live, setLive] = useState(0);
+  const servers = baseServers.map((x, i) => ({ ...x, gpu: Math.max(20, Math.min(99, x.gpu + ((live + i * 3) % 9) - 4)), power: x.power + ((live * (i + 2)) % 17) - 8, temp: x.temp + ((live + i) % 5) - 2 }));
+  useEffect(() => { const timer = setInterval(() => setLive(v => v + 1), 2000); return () => clearInterval(timer); }, []);
   return (
     <main className="min-h-screen bg-slate-950 text-white p-5 md:p-10">
       <div className="mx-auto max-w-6xl">
