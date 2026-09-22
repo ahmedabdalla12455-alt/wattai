@@ -23,3 +23,9 @@ jobs:
 
       - name: Prepare Android builder
         run: npm install -g @bubblewrap/cli
+
+      - name: Initialize Android project
+        run: bubblewrap init --manifest twa-manifest.json
+
+      - name: Build Android App Bundle
+        run: bubblewrap build
