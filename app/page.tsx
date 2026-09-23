@@ -47,6 +47,39 @@ export default function Home() {
   const energyToday = 42.8 + live * 0.03;
   const estimatedCost = energyToday * energyRate;
 
+  const analysis = useMemo(() => {
+    const highLoad = servers.filter(
+      (server) => server.status === "High load",
+    );
+    const hottest = [...servers].sort((a, b) => b.temp - a.temp)[0];
+    const highestPower = [...servers].sort((a, b) => b.power - a.power)[0];
+
+    if (highLoad.length > 0) {
+      return {
+        title: "Efficiency opportunity detected",
+        message: `${highLoad.length} server(s) are under high load. ${highestPower.name} is currently using the most power at ${highestPower.power} W.`,
+        action: "Review high-load workloads and power usage.",
+        level: "warning",
+      };
+    }
+
+    if (hottest.temp >= 68) {
+      return {
+        title: "Thermal attention recommended",
+        message: `${hottest.name} is the warmest server at ${hottest.temp}°C.`,
+        action: "Check cooling and airflow for this server.",
+        level: "warning",
+      };
+    }
+
+    return {
+      title: "Infrastructure looks healthy",
+      message: `All ${servers.length} servers are operating within the simulated healthy range.`,
+      action: "Continue monitoring telemetry for changes.",
+      level: "healthy",
+    };
+  }, [servers]);
+
   return (
     <main className="min-h-screen bg-slate-950 p-5 text-white md:p-10">
       <div className="mx-auto max-w-6xl">
@@ -140,14 +173,19 @@ export default function Home() {
             </div>
 
             <h2 className="mt-3 text-xl font-bold">
-              Energy opportunity detected
+              {analysis.title}
             </h2>
 
             <p className="mt-3 text-sm leading-6 text-slate-300">
-              GPU-02 is currently operating at high utilization and power.
-              WattAI is monitoring the workload for possible efficiency
-              improvements.
+              {analysis.message}
             </p>
+
+            <div className="mt-4 rounded-xl border border-slate-800 bg-slate-950/60 p-4">
+              <div className="text-xs text-slate-500">Recommendation</div>
+              <div className="mt-1 text-sm text-slate-200">
+                {analysis.action}
+              </div>
+            </div>
 
             <div className="mt-5 rounded-xl bg-slate-950/70 p-4">
               <div className="text-xs text-slate-500">
@@ -169,9 +207,18 @@ export default function Home() {
               </div>
             </div>
 
-            <button className="mt-5 w-full rounded-xl bg-cyan-500 py-3 font-semibold text-slate-950 transition hover:bg-cyan-400">
-              Analyze infrastructure
-            </button>
+            <div className="mt-5 rounded-xl bg-slate-950/70 p-4">
+              <div className="text-xs text-slate-500">Analysis status</div>
+              <div
+                className={`mt-1 text-sm font-semibold ${
+                  analysis.level === "healthy"
+                    ? "text-emerald-400"
+                    : "text-amber-400"
+                }`}
+              >
+                ● Local AI rules active
+              </div>
+            </div>
           </div>
         </section>
 
