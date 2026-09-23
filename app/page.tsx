@@ -1,48 +1,89 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 const baseServers = [
-  { name: "GPU-01", gpu: 78, power: 286, temp: 64, status: "Healthy" },
-  { name: "GPU-02", gpu: 91, power: 331, temp: 71, status: "High load" },
-  { name: "GPU-03", gpu: 54, power: 219, temp: 58, status: "Healthy" },
+  { name: "GPU-01", gpu: 78, power: 286, temp: 64 },
+  { name: "GPU-02", gpu: 91, power: 331, temp: 71 },
+  { name: "GPU-03", gpu: 54, power: 219, temp: 58 },
+  { name: "GPU-04", gpu: 67, power: 248, temp: 62 },
 ];
+
+const energyRate = 0.15;
 
 export default function Home() {
   const [live, setLive] = useState(0);
-  const servers = baseServers.map((x, i) => ({ ...x, gpu: Math.max(20, Math.min(99, x.gpu + ((live + i * 3) % 9) - 4)), power: x.power + ((live * (i + 2)) % 17) - 8, temp: x.temp + ((live + i) % 5) - 2 }));
-  useEffect(() => { const timer = setInterval(() => setLive(v => v + 1), 2000); return () => clearInterval(timer); }, []);
+
+  useEffect(() => {
+    const timer = setInterval(() => setLive((value) => value + 1), 2000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const servers = useMemo(
+    () =>
+      baseServers.map((server, i) => {
+        const gpu = Math.max(
+          20,
+          Math.min(99, server.gpu + ((live + i * 3) % 11) - 5),
+        );
+        const power = server.power + ((live * (i + 2)) % 21) - 10;
+        const temp = server.temp + ((live + i) % 7) - 3;
+
+        return {
+          ...server,
+          gpu,
+          power,
+          temp,
+          status: temp >= 70 || gpu >= 90 ? "High load" : "Healthy",
+        };
+      }),
+    [live],
+  );
+
+  const totalPower = servers.reduce((sum, server) => sum + server.power, 0);
+  const avgGpu = Math.round(
+    servers.reduce((sum, server) => sum + server.gpu, 0) / servers.length,
+  );
+  const energyToday = 42.8 + live * 0.03;
+  const estimatedCost = energyToday * energyRate;
+
   return (
-    <main className="min-h-screen bg-slate-950 text-white p-5 md:p-10">
+    <main className="min-h-screen bg-slate-950 p-5 text-white md:p-10">
       <div className="mx-auto max-w-6xl">
         <header className="mb-8">
-          <div className="text-sm text-cyan-400 font-semibold tracking-widest">
+          <div className="text-sm font-semibold tracking-widest text-cyan-400">
             WATTAI
           </div>
-          <h1 className="mt-2 text-3xl md:text-5xl font-bold">
+          <h1 className="mt-2 text-3xl font-bold md:text-5xl">
             AI Energy Monitor
           </h1>
           <p className="mt-2 text-slate-400">
             مراقبة الطاقة وأداء خوادم الذكاء الاصطناعي
           </p>
+          <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-cyan-900/60 bg-cyan-950/30 px-3 py-1 text-xs text-cyan-300">
+            <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
+            Live telemetry simulation
+          </div>
         </header>
 
-        <section className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <Card title="ENERGY TODAY" value="42.8 kWh" icon="⚡" />
-          <Card title="EST. COST" value="$6.42" icon="💰" />
-          <Card title="GPU UTILIZATION" value="74%" icon="🎮" />
-          <Card title="TOTAL POWER" value="836 W" icon="🔌" />
+        <section className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <Card title="ENERGY TODAY" value={`${energyToday.toFixed(1)} kWh`} icon="⚡" />
+          <Card title="EST. COST" value={`$${estimatedCost.toFixed(2)}`} icon="💰" />
+          <Card title="GPU UTILIZATION" value={`${avgGpu}%`} icon="🎮" />
+          <Card title="TOTAL POWER" value={`${totalPower} W`} icon="🔌" />
         </section>
 
-        <section className="grid lg:grid-cols-3 gap-5">
-          <div className="lg:col-span-2 rounded-2xl border border-slate-800 bg-slate-900 p-5">
-            <div className="flex justify-between items-center mb-5">
+        <section className="grid gap-5 lg:grid-cols-3">
+          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 lg:col-span-2">
+            <div className="mb-5 flex items-center justify-between">
               <div>
                 <h2 className="text-xl font-semibold">Servers</h2>
-                <p className="text-sm text-slate-500">Live infrastructure overview</p>
+                <p className="text-sm text-slate-500">
+                  Live infrastructure overview
+                </p>
               </div>
               <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs text-emerald-400">
-                ● 3 Online
+                ● {servers.length} Online
               </span>
             </div>
 
@@ -50,15 +91,22 @@ export default function Home() {
               {servers.map((server) => (
                 <div
                   key={server.name}
-                  className="rounded-xl bg-slate-950 border border-slate-800 p-4"
+                  className="rounded-xl border border-slate-800 bg-slate-950 p-4"
                 >
-                  <div className="flex justify-between mb-3">
+                  <div className="mb-3 flex justify-between">
                     <div>
                       <div className="font-semibold">{server.name}</div>
-                      <div className="text-xs text-slate-500">
+                      <div
+                        className={
+                          server.status === "High load"
+                            ? "text-xs text-amber-400"
+                            : "text-xs text-emerald-400"
+                        }
+                      >
                         {server.status}
                       </div>
                     </div>
+
                     <div className="text-right">
                       <div className="font-semibold">{server.power} W</div>
                       <div className="text-xs text-slate-500">
@@ -67,15 +115,19 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <div className="h-2 rounded-full bg-slate-800 overflow-hidden">
+                  <div className="h-2 overflow-hidden rounded-full bg-slate-800">
                     <div
-                      className="h-full rounded-full bg-cyan-400"
+                      className="h-full rounded-full bg-cyan-400 transition-all duration-500"
                       style={{ width: `${server.gpu}%` }}
                     />
                   </div>
 
-                  <div className="mt-2 text-xs text-slate-500">
-                    GPU utilization: {server.gpu}%
+                  <div className="mt-2 flex justify-between text-xs text-slate-500">
+                    <span>GPU utilization: {server.gpu}%</span>
+                    <span>
+                      {Math.round(server.power / Math.max(server.gpu, 1))} W /
+                      GPU%
+                    </span>
                   </div>
                 </div>
               ))}
@@ -83,7 +135,7 @@ export default function Home() {
           </div>
 
           <div className="rounded-2xl border border-cyan-900/50 bg-cyan-950/20 p-5">
-            <div className="text-cyan-400 text-sm font-semibold">
+            <div className="text-sm font-semibold text-cyan-400">
               🤖 AI ANALYST
             </div>
 
@@ -92,26 +144,39 @@ export default function Home() {
             </h2>
 
             <p className="mt-3 text-sm leading-6 text-slate-300">
-              GPU-02 is using high power while maintaining very high
-              utilization. WattAI recommends monitoring this workload for
-              possible efficiency improvements.
+              GPU-02 is currently operating at high utilization and power.
+              WattAI is monitoring the workload for possible efficiency
+              improvements.
             </p>
 
             <div className="mt-5 rounded-xl bg-slate-950/70 p-4">
-              <div className="text-xs text-slate-500">Potential saving</div>
+              <div className="text-xs text-slate-500">
+                Electricity rate
+              </div>
+              <div className="mt-1 text-2xl font-bold text-cyan-400">
+                $0.15/kWh
+              </div>
+
+              <div className="mt-3 text-xs text-slate-500">
+                Potential saving
+              </div>
               <div className="mt-1 text-2xl font-bold text-emerald-400">
                 8–14%
               </div>
+
+              <div className="mt-1 text-xs text-slate-500">
+                Simulation estimate
+              </div>
             </div>
 
-            <button className="mt-5 w-full rounded-xl bg-cyan-500 py-3 font-semibold text-slate-950">
+            <button className="mt-5 w-full rounded-xl bg-cyan-500 py-3 font-semibold text-slate-950 transition hover:bg-cyan-400">
               Analyze infrastructure
             </button>
           </div>
         </section>
 
         <footer className="mt-10 text-center text-xs text-slate-600">
-          WattAI V0.3 • Live GPU Monitoring • AI Energy & GPU Monitoring
+          WattAI V0.5 • Live Telemetry Simulation • AI Energy & GPU Monitoring
         </footer>
       </div>
     </main>
@@ -131,7 +196,7 @@ function Card({
     <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4">
       <div className="text-xl">{icon}</div>
       <div className="mt-4 text-xs text-slate-500">{title}</div>
-      <div className="mt-1 text-xl md:text-2xl font-bold">{value}</div>
+      <div className="mt-1 text-xl font-bold md:text-2xl">{value}</div>
     </div>
   );
 }
