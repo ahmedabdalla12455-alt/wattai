@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: wattai
+      POSTGRES_PASSWORD: wattai
+      POSTGRES_DB: wattai
+    ports:
+      - "5432:5432"
+    volumes:
+      - wattai_postgres:/var/lib/postgresql/data
+
+volumes:
+  wattai_postgres:
