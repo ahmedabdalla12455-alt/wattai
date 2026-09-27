@@ -35,6 +35,15 @@ def add_telemetry(data: Telemetry):
     return item
 
 
+@app.get("/gpu/ready")
+def gpu_ready():
+    return {
+        "ready": True,
+        "source": "external-nvidia-gpu",
+        "message": "WattAI is ready to receive real GPU telemetry.",
+    }
+
+
 @app.get("/analytics")
 def analytics():
     if not telemetry:
