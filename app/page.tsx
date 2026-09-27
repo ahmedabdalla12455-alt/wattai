@@ -106,6 +106,44 @@ export default function Home() {
           <Card title="TOTAL POWER" value={`${totalPower} W`} icon="🔌" />
         </section>
 
+        <section className="mb-8 rounded-2xl border border-slate-800 bg-slate-900 p-5">
+          <div className="mb-5 flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-semibold">Energy Analytics</h2>
+              <p className="text-sm text-slate-500">Simulated energy history</p>
+            </div>
+            <div className="text-right">
+              <div className="text-xs text-slate-500">Rate</div>
+              <div className="font-semibold text-cyan-400">$0.15/kWh</div>
+            </div>
+          </div>
+
+          <div className="flex h-40 items-end gap-2">
+            {Array.from({ length: 12 }, (_, i) => {
+              const value = Math.max(
+                18,
+                Math.round(42 + Math.sin(i / 2) * 12 + live * 0.02),
+              );
+
+              return (
+                <div key={i} className="flex h-full flex-1 items-end">
+                  <div
+                    className="w-full rounded-t-md bg-cyan-400 transition-all duration-500"
+                    style={{ height: `${Math.max(8, (value / 60) * 100)}%` }}
+                    title={`${value} kWh`}
+                  />
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="mt-3 flex justify-between text-xs text-slate-600">
+            <span>12 periods</span>
+            <span>Energy: {energyToday.toFixed(1)} kWh</span>
+            <span>Cost: ${estimatedCost.toFixed(2)}</span>
+          </div>
+        </section>
+
         <section className="grid gap-5 lg:grid-cols-3">
           <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 lg:col-span-2">
             <div className="mb-5 flex items-center justify-between">
