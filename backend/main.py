@@ -35,6 +35,47 @@ def add_telemetry(data: Telemetry):
     return item
 
 
+@app.post("/ai/analyze")
+def ai_analyze():
+    if not telemetry:
+        return {
+            "status": "no_data",
+            "detection": "No telemetry available.",
+            "explanation": "WattAI needs GPU/server telemetry before analysis.",
+            "recommendation": "Send telemetry to POST /telemetry.",
+        }
+
+    latest = telemetry[-1]
+    power = latest["power"]
+    gpu = latest["gpu"]
+    temp = latest["temp"]
+
+    if temp >= 80:
+        detection = "High thermal load detected."
+        explanation = f"{latest['server']} is running at {temp}°C."
+        recommendation = "Check cooling, airflow, and GPU workload."
+    elif power >= 700:
+        detection = "High power usage detected."
+        explanation = f"{latest['server']} is consuming {power} W."
+        recommendation = "Review workload efficiency and GPU utilization."
+    elif gpu >= 90:
+        detection = "High GPU utilization detected."
+        explanation = f"{latest['server']} GPU utilization is {gpu}%."
+        recommendation = "Verify workload demand and monitor thermal/power impact."
+    else:
+        detection = "Telemetry is within the local healthy range."
+        explanation = f"{latest['server']} is operating at {gpu}% GPU, {power} W, and {temp}°C."
+        recommendation = "Continue monitoring for changes."
+
+    return {
+        "status": "ok",
+        "mode": "local-rules",
+        "detection": detection,
+        "explanation": explanation,
+        "recommendation": recommendation,
+    }
+
+
 @app.get("/gpu/ready")
 def gpu_ready():
     return {
