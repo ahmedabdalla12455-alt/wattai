@@ -13,10 +13,56 @@ const energyRate = 0.15;
 
 export default function Home() {
   const [live, setLive] = useState(0);
+  const [apiAnalysis, setApiAnalysis] = useState<{
+    status: string;
+    detection: string;
+    explanation: string;
+    recommendation: string;
+  } | null>(null);
+  const [apiStatus, setApiStatus] = useState("API not connected");
 
   useEffect(() => {
     const timer = setInterval(() => setLive((value) => value + 1), 2000);
     return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    const apiUrl = process.env.NEXT_PUBLIC_WATTAI_API_URL;
+
+    if (!apiUrl) {
+      setApiStatus("Local analysis active");
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadAnalysis = async () => {
+      try {
+        const response = await fetch(`${apiUrl.replace(/\/$/, "")}/ai/analyze`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+        });
+
+        if (!response.ok) throw new Error("API request failed");
+
+        const result = await response.json();
+
+        if (!cancelled) {
+          setApiAnalysis(result);
+          setApiStatus("Backend connected");
+        }
+      } catch {
+        if (!cancelled) setApiStatus("Backend unavailable; using local analysis");
+      }
+    };
+
+    void loadAnalysis();
+    const timer = setInterval(() => void loadAnalysis(), 10000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
   }, []);
 
   const servers = useMemo(
@@ -209,19 +255,22 @@ export default function Home() {
             <div className="text-sm font-semibold text-cyan-400">
               🤖 AI ANALYST
             </div>
+            <div className="mt-2 text-xs text-slate-500">
+              API: {apiStatus}
+            </div>
 
             <h2 className="mt-3 text-xl font-bold">
-              {analysis.title}
+              {apiAnalysis?.detection ?? analysis.title}
             </h2>
 
             <p className="mt-3 text-sm leading-6 text-slate-300">
-              {analysis.message}
+              {apiAnalysis?.explanation ?? analysis.message}
             </p>
 
             <div className="mt-4 rounded-xl border border-slate-800 bg-slate-950/60 p-4">
               <div className="text-xs text-slate-500">Recommendation</div>
               <div className="mt-1 text-sm text-slate-200">
-                {analysis.action}
+                {apiAnalysis?.recommendation ?? analysis.action}
               </div>
             </div>
 
