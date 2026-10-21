@@ -1,336 +1,68 @@
-"use client";
+import Link from "next/link";
 
-import { useEffect, useMemo, useState } from "react";
-
-const baseServers = [
-  { name: "GPU-01", gpu: 78, power: 286, temp: 64 },
-  { name: "GPU-02", gpu: 91, power: 331, temp: 71 },
-  { name: "GPU-03", gpu: 54, power: 219, temp: 58 },
-  { name: "GPU-04", gpu: 67, power: 248, temp: 62 },
+const links = [
+  { icon: "＋", title: "إدخال بيانات الخادم", desc: "أضف قراءات GPU والطاقة والحرارة", href: "/telemetry" },
+  { icon: "▥", title: "التحليل والتقارير", desc: "راجع الاستهلاك والتكلفة والقراءات", href: "/reports" },
+  { icon: "↗", title: "تسجيل الدخول", desc: "ادخل إلى حسابك", href: "/login" },
+  { icon: "◎", title: "إنشاء حساب", desc: "ابدأ إعداد حسابك في WattAI", href: "/signup" },
 ];
 
-const energyRate = 0.15;
-
 export default function Home() {
-  const [live, setLive] = useState(0);
-  const [apiAnalysis, setApiAnalysis] = useState<{
-    status: string;
-    detection: string;
-    explanation: string;
-    recommendation: string;
-  } | null>(null);
-  const [apiStatus, setApiStatus] = useState("API not connected");
-
-  useEffect(() => {
-    const timer = setInterval(() => setLive((value) => value + 1), 2000);
-    return () => clearInterval(timer);
-  }, []);
-
-  useEffect(() => {
-    const apiUrl = process.env.NEXT_PUBLIC_WATTAI_API_URL;
-
-    if (!apiUrl) {
-      setApiStatus("Local analysis active");
-      return;
-    }
-
-    let cancelled = false;
-
-    const loadAnalysis = async () => {
-      try {
-        const response = await fetch(`${apiUrl.replace(/\/$/, "")}/ai/analyze`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-        });
-
-        if (!response.ok) throw new Error("API request failed");
-
-        const result = await response.json();
-
-        if (!cancelled) {
-          setApiAnalysis(result);
-          setApiStatus("Backend connected");
-        }
-      } catch {
-        if (!cancelled) setApiStatus("Backend unavailable; using local analysis");
-      }
-    };
-
-    void loadAnalysis();
-    const timer = setInterval(() => void loadAnalysis(), 10000);
-
-    return () => {
-      cancelled = true;
-      clearInterval(timer);
-    };
-  }, []);
-
-  const servers = useMemo(
-    () =>
-      baseServers.map((server, i) => {
-        const gpu = Math.max(
-          20,
-          Math.min(99, server.gpu + ((live + i * 3) % 11) - 5),
-        );
-        const power = server.power + ((live * (i + 2)) % 21) - 10;
-        const temp = server.temp + ((live + i) % 7) - 3;
-
-        return {
-          ...server,
-          gpu,
-          power,
-          temp,
-          status: temp >= 70 || gpu >= 90 ? "High load" : "Healthy",
-        };
-      }),
-    [live],
-  );
-
-  const totalPower = servers.reduce((sum, server) => sum + server.power, 0);
-  const avgGpu = Math.round(
-    servers.reduce((sum, server) => sum + server.gpu, 0) / servers.length,
-  );
-  const energyToday = 42.8 + live * 0.03;
-  const estimatedCost = energyToday * energyRate;
-
-  const analysis = useMemo(() => {
-    const highLoad = servers.filter(
-      (server) => server.status === "High load",
-    );
-    const hottest = [...servers].sort((a, b) => b.temp - a.temp)[0];
-    const highestPower = [...servers].sort((a, b) => b.power - a.power)[0];
-
-    if (highLoad.length > 0) {
-      return {
-        title: "Efficiency opportunity detected",
-        message: `${highLoad.length} server(s) are under high load. ${highestPower.name} is currently using the most power at ${highestPower.power} W.`,
-        action: "Review high-load workloads and power usage.",
-        level: "warning",
-      };
-    }
-
-    if (hottest.temp >= 68) {
-      return {
-        title: "Thermal attention recommended",
-        message: `${hottest.name} is the warmest server at ${hottest.temp}°C.`,
-        action: "Check cooling and airflow for this server.",
-        level: "warning",
-      };
-    }
-
-    return {
-      title: "Infrastructure looks healthy",
-      message: `All ${servers.length} servers are operating within the simulated healthy range.`,
-      action: "Continue monitoring telemetry for changes.",
-      level: "healthy",
-    };
-  }, [servers]);
-
   return (
-    <main className="min-h-screen bg-slate-950 p-5 text-white md:p-10">
+    <main dir="rtl" className="min-h-screen bg-slate-950 px-5 py-8 text-white md:px-10">
       <div className="mx-auto max-w-6xl">
-        <header className="mb-8">
-          <div className="text-sm font-semibold tracking-widest text-cyan-400">
-            WATTAI
+        <nav className="flex items-center justify-between border-b border-slate-800 pb-5">
+          <Link href="/" className="text-2xl font-black text-cyan-400">WattAI</Link>
+          <div className="flex gap-3">
+            <Link href="/login" className="rounded-xl border border-slate-700 px-4 py-2">دخول</Link>
+            <Link href="/signup" className="rounded-xl bg-cyan-400 px-4 py-2 font-bold text-slate-950">إنشاء حساب</Link>
           </div>
-          <h1 className="mt-2 text-3xl font-bold md:text-5xl">
-            AI Energy Monitor
-          </h1>
-          <p className="mt-2 text-slate-400">
-            مراقبة الطاقة وأداء خوادم الذكاء الاصطناعي
-          </p>
-          <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-cyan-900/60 bg-cyan-950/30 px-3 py-1 text-xs text-cyan-300">
-            <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
-            Live telemetry simulation
-          </div>
-        </header>
+        </nav>
 
-        <section className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
-          <Card title="ENERGY TODAY" value={`${energyToday.toFixed(1)} kWh`} icon="⚡" />
-          <Card title="EST. COST" value={`$${estimatedCost.toFixed(2)}`} icon="💰" />
-          <Card title="GPU UTILIZATION" value={`${avgGpu}%`} icon="🎮" />
-          <Card title="TOTAL POWER" value={`${totalPower} W`} icon="🔌" />
-        </section>
-
-        <section className="mb-8 rounded-2xl border border-slate-800 bg-slate-900 p-5">
-          <div className="mb-5 flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-semibold">Energy Analytics</h2>
-              <p className="text-sm text-slate-500">Simulated energy history</p>
+        <section className="grid items-center gap-10 py-16 md:grid-cols-2 md:py-24">
+          <div>
+            <span className="rounded-full border border-cyan-900 bg-cyan-950/40 px-3 py-2 text-sm text-cyan-300">مراقبة الطاقة بذكاء</span>
+            <h1 className="mt-7 text-4xl font-black leading-tight md:text-6xl">افهم استهلاك خوادمك، واتخذ قرارات أفضل.</h1>
+            <p className="mt-5 max-w-xl text-lg leading-8 text-slate-400">أدخل بيانات الخوادم، واحسب استهلاك الطاقة والتكلفة، وتابع التحليلات والتقارير من مكان واحد.</p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link href="/telemetry" className="rounded-xl bg-cyan-400 px-6 py-3 font-bold text-slate-950">ابدأ إدخال البيانات ←</Link>
+              <Link href="/reports" className="rounded-xl border border-slate-700 px-6 py-3">عرض التقارير</Link>
             </div>
-            <div className="text-right">
-              <div className="text-xs text-slate-500">Rate</div>
-              <div className="font-semibold text-cyan-400">$0.15/kWh</div>
+            <p className="mt-5 text-xs text-amber-300">ملاحظة: بيانات العرض تجريبية حتى ربط أجهزة ومصادر فعلية.</p>
+          </div>
+
+          <div className="rounded-3xl border border-slate-800 bg-slate-900 p-6 shadow-2xl">
+            <div className="flex items-center justify-between">
+              <div><p className="text-sm text-slate-400">لوحة WattAI</p><h2 className="mt-1 text-xl font-bold">نظرة عامة</h2></div>
+              <span className="rounded-full bg-amber-950 px-3 py-1 text-xs text-amber-300">عرض تجريبي</span>
             </div>
-          </div>
-
-          <div className="flex h-40 items-end gap-2">
-            {Array.from({ length: 12 }, (_, i) => {
-              const value = Math.max(
-                18,
-                Math.round(42 + Math.sin(i / 2) * 12 + live * 0.02),
-              );
-
-              return (
-                <div key={i} className="flex h-full flex-1 items-end">
-                  <div
-                    className="w-full rounded-t-md bg-cyan-400 transition-all duration-500"
-                    style={{ height: `${Math.max(8, (value / 60) * 100)}%` }}
-                    title={`${value} kWh`}
-                  />
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="mt-3 flex justify-between text-xs text-slate-600">
-            <span>12 periods</span>
-            <span>Energy: {energyToday.toFixed(1)} kWh</span>
-            <span>Cost: ${estimatedCost.toFixed(2)}</span>
-          </div>
-        </section>
-
-        <section className="grid gap-5 lg:grid-cols-3">
-          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 lg:col-span-2">
-            <div className="mb-5 flex items-center justify-between">
-              <div>
-                <h2 className="text-xl font-semibold">Servers</h2>
-                <p className="text-sm text-slate-500">
-                  Live infrastructure overview
-                </p>
-              </div>
-              <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs text-emerald-400">
-                ● {servers.length} Online
-              </span>
-            </div>
-
-            <div className="space-y-3">
-              {servers.map((server) => (
-                <div
-                  key={server.name}
-                  className="rounded-xl border border-slate-800 bg-slate-950 p-4"
-                >
-                  <div className="mb-3 flex justify-between">
-                    <div>
-                      <div className="font-semibold">{server.name}</div>
-                      <div
-                        className={
-                          server.status === "High load"
-                            ? "text-xs text-amber-400"
-                            : "text-xs text-emerald-400"
-                        }
-                      >
-                        {server.status}
-                      </div>
-                    </div>
-
-                    <div className="text-right">
-                      <div className="font-semibold">{server.power} W</div>
-                      <div className="text-xs text-slate-500">
-                        {server.temp}°C
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="h-2 overflow-hidden rounded-full bg-slate-800">
-                    <div
-                      className="h-full rounded-full bg-cyan-400 transition-all duration-500"
-                      style={{ width: `${server.gpu}%` }}
-                    />
-                  </div>
-
-                  <div className="mt-2 flex justify-between text-xs text-slate-500">
-                    <span>GPU utilization: {server.gpu}%</span>
-                    <span>
-                      {Math.round(server.power / Math.max(server.gpu, 1))} W /
-                      GPU%
-                    </span>
-                  </div>
+            <div className="mt-6 grid grid-cols-2 gap-3">
+              {[["استهلاك الطاقة","42.8 kWh"],["التكلفة التقديرية","$6.42"],["استخدام GPU","73%"],["الخوادم","4"]].map(([label,value])=>(
+                <div key={label} className="rounded-2xl border border-slate-800 bg-slate-950 p-4">
+                  <p className="text-sm text-slate-400">{label}</p><p className="mt-3 text-2xl font-bold text-cyan-300">{value}</p>
                 </div>
               ))}
             </div>
-          </div>
-
-          <div className="rounded-2xl border border-cyan-900/50 bg-cyan-950/20 p-5">
-            <div className="text-sm font-semibold text-cyan-400">
-              🤖 AI ANALYST
-            </div>
-            <div className="mt-2 text-xs text-slate-500">
-              API: {apiStatus}
-            </div>
-
-            <h2 className="mt-3 text-xl font-bold">
-              {apiAnalysis?.detection ?? analysis.title}
-            </h2>
-
-            <p className="mt-3 text-sm leading-6 text-slate-300">
-              {apiAnalysis?.explanation ?? analysis.message}
-            </p>
-
-            <div className="mt-4 rounded-xl border border-slate-800 bg-slate-950/60 p-4">
-              <div className="text-xs text-slate-500">Recommendation</div>
-              <div className="mt-1 text-sm text-slate-200">
-                {apiAnalysis?.recommendation ?? analysis.action}
-              </div>
-            </div>
-
-            <div className="mt-5 rounded-xl bg-slate-950/70 p-4">
-              <div className="text-xs text-slate-500">
-                Electricity rate
-              </div>
-              <div className="mt-1 text-2xl font-bold text-cyan-400">
-                $0.15/kWh
-              </div>
-
-              <div className="mt-3 text-xs text-slate-500">
-                Potential saving
-              </div>
-              <div className="mt-1 text-2xl font-bold text-emerald-400">
-                8–14%
-              </div>
-
-              <div className="mt-1 text-xs text-slate-500">
-                Simulation estimate
-              </div>
-            </div>
-
-            <div className="mt-5 rounded-xl bg-slate-950/70 p-4">
-              <div className="text-xs text-slate-500">Analysis status</div>
-              <div
-                className={`mt-1 text-sm font-semibold ${
-                  analysis.level === "healthy"
-                    ? "text-emerald-400"
-                    : "text-amber-400"
-                }`}
-              >
-                ● Local AI rules active
-              </div>
+            <div className="mt-4 rounded-2xl border border-slate-800 p-4">
+              <p className="font-semibold">مسار العمل</p>
+              <p className="mt-2 text-sm leading-7 text-slate-400">إنشاء حساب ← إدخال القراءات ← تحليل الاستهلاك ← مراجعة التقارير</p>
             </div>
           </div>
         </section>
 
-        <footer className="mt-10 text-center text-xs text-slate-600">
-          WattAI V0.5 • Live Telemetry Simulation • AI Energy & GPU Monitoring
-        </footer>
+        <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {links.map(item=>(
+            <Link key={item.href} href={item.href} className="group rounded-2xl border border-slate-800 bg-slate-900 p-5 transition hover:border-cyan-500 hover:bg-slate-900/70">
+              <span className="text-3xl text-cyan-400">{item.icon}</span>
+              <h2 className="mt-4 text-lg font-bold">{item.title}</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-400">{item.desc}</p>
+              <span className="mt-4 block text-sm text-cyan-300">فتح الصفحة ←</span>
+            </Link>
+          ))}
+        </section>
+
+        <footer className="mt-16 border-t border-slate-800 pt-5 text-center text-sm text-slate-500">WattAI • مراقبة الطاقة وتحليل الخوادم</footer>
       </div>
     </main>
-  );
-}
-
-function Card({
-  title,
-  value,
-  icon,
-}: {
-  title: string;
-  value: string;
-  icon: string;
-}) {
-  return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4">
-      <div className="text-xl">{icon}</div>
-      <div className="mt-4 text-xs text-slate-500">{title}</div>
-      <div className="mt-1 text-xl font-bold md:text-2xl">{value}</div>
-    </div>
   );
 }
