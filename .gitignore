@@ -46,3 +46,10 @@ __pycache__/
 wattai-manager-report.txt
 
 wattai-manager-audit.log
+.env
+.env.local
+.env.*.local
+x
+lib/supabase.tscd
+node_modules
+.next
